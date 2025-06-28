@@ -1,0 +1,19 @@
+version: '3.9'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "5000:3000"   # Maps host 5000 to container 3000
+    environment:
+      - NODE_ENV=production
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "3000:3000"   # React served on host 3000
+    depends_on:
+      - backend
+

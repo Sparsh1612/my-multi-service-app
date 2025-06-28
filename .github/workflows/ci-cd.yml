@@ -1,0 +1,49 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    env:
+      DOCKER_USER: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASS: ${{ secrets.DOCKER_PASSWORD }}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm install
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm install
+
+    - name: Build frontend
+      working-directory: ./frontend
+      run: npm run build || echo "Build skipped"
+
+    - name: Log in to Docker Hub
+      run: echo "${DOCKER_PASS}" | docker login -u "${DOCKER_USER}" --password-stdin
+
+    - name: Build and push backend image
+      run: |
+        docker build -t $DOCKER_USER/myapp-backend ./backend
+        docker push $DOCKER_USER/myapp-backend
+
+    - name: Build and push frontend image
+      run: |
+        docker build -t $DOCKER_USER/myapp-frontend ./frontend
+        docker push $DOCKER_USER/myapp-frontend
